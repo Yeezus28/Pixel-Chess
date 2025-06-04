@@ -6,23 +6,37 @@ import ChessPiece from '../ChessPiece/chessPiece.jsx';
 export default function ChessBoard() {
   const [board, setBoard] = useState(initialBoard);
   const [selected, setSelected] = useState(null);
+  
+  // Track whose turn it is
+  const [turn, setTurn] = useState('white');
 
   function handleClick(rowIdx, colIdx) {
-    const cell = board[rowIdx][colIdx];
+  const cell = board[rowIdx][colIdx];
+  const currentPiece = selected ? board[selected.row][selected.col] : null;
+  const currentColor = turn === 'white' ? 'w' : 'b';
 
-    if (selected) {
-      const newBoard = board.map(row => [...row]);
+  if (selected) {
+    const targetPiece = board[rowIdx][colIdx];
 
-      // Move selected piece to new square
-      newBoard[rowIdx][colIdx] = board[selected.row][selected.col];
-      newBoard[selected.row][selected.col] = null;
+    // Don't allow capturing your own piece
+    if (targetPiece && targetPiece[0] === currentColor) {
+      setSelected({ row: rowIdx, col: colIdx }); // select a different piece
+      return;
+    }
 
-      setBoard(newBoard);
-      setSelected(null);
-    } else {
-      if (cell) setSelected({ row: rowIdx, col: colIdx });
+    const newBoard = board.map(row => [...row]);
+    newBoard[rowIdx][colIdx] = currentPiece;
+    newBoard[selected.row][selected.col] = null;
+
+    setBoard(newBoard);
+    setSelected(null);
+    setTurn(turn === 'white' ? 'black' : 'white');
+  } else {
+    if (cell && cell[0] === currentColor) {
+      setSelected({ row: rowIdx, col: colIdx });
     }
   }
+}
 
   return (
     <div className="chessboard">

@@ -3,8 +3,18 @@
   aspect-ratio: 1 / 1;
   background-image: var(--sprite-url);
   background-repeat: no-repeat;
-  background-size: 200% 300%; /* Needed for 2 cols x 3 rows */
+  background-size: 200% 300%;
   background-position: 
-    calc(var(--col) * -100%) 
-    calc(var(--row) * -100%);
+    calc(var(--col) * 100%) 
+    calc(var(--row) * 100%);
+}
+
+@keyframes floatPiece {
+  0%   { transform: translateY(-5%); }
+  50%  { transform: translateY(-20%); }
+  100% { transform: translateY(-5%); }
+}
+
+.piece-sprite:hover {
+  animation: floatPiece 1.5s ease-in-out infinite;
 }
