@@ -1,0 +1,10 @@
+.piece-sprite {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-image: var(--sprite-url);
+  background-repeat: no-repeat;
+  background-size: 200% 300%; /* Needed for 2 cols x 3 rows */
+  background-position: 
+    calc(var(--col) * -100%) 
+    calc(var(--row) * -100%);
+}

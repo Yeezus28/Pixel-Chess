@@ -1,0 +1,29 @@
+.chessboard {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 80vmin;   /* Use viewport minimum (either width or height) */
+  height: 80vmin;  /* Keep height equal to width for a square */
+  max-width: 720px;  /* Optional max size */
+  max-height: 720px;
+}
+
+.square.light {
+  background-color: var(--ChessBoard-Light); /* Light square color */
+}
+
+.square.dark {
+  background-color: var(--ChessBoard-Dark); /* Dark square color */
+}
+
+.square {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.piece {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

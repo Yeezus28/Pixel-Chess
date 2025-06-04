@@ -1,0 +1,18 @@
+:root{
+    --Background: #0A0908;
+    --Primary: #22333B;    
+    --Secondary: #5E503F;
+    --Tertiary: #C6AC8F;
+    --Accent: #EAE0D5;
+
+    --ChessBoard-Dark: #769656;
+    --ChessBoard-Light: #EEEED2;
+
+    --ChessBoard-Piece-Black: #000000;
+    --ChessBoard-Piece-White: #FFFFFF;
+
+    --ChessBoard-Piece-Black-Shadow: rgba(0, 0, 0, 0.5);
+    --ChessBoard-Piece-White-Shadow: rgba(255, 255, 255, 0.5);
+
+    --padding: 2rem;
+}

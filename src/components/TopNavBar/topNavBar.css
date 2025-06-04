@@ -1,0 +1,38 @@
+.top-nav-bar {
+  background-color: var(--Primary);
+  color: var(--Accent);
+  transition: all 0.3s ease;
+  position: fixed;
+}
+
+/* Horizontal (top bar) */
+.topbar {
+  width: calc(100% - 2*var(--padding));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  padding: 0 var(--padding);
+}
+
+/* Vertical (side bar) */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: 0 calc(0.5*var(--padding));
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.nav-links {
+  color: var(--Accent);
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* Change layout of links in sidebar mode */
+.sidebar .nav-links {
+  flex-direction: column;
+}
