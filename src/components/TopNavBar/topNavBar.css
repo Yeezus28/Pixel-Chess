@@ -22,8 +22,9 @@
   height: 100dvh;
   padding: 0 calc(0.5*var(--padding));
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: center;
   gap: 1.5rem;
+  right: 1em;
 }
 
 .nav-links {
