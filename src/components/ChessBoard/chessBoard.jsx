@@ -58,7 +58,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
     } else {
       if (cell && cell[0] === currentColor) {
         setSelected({ row: rowIdx, col: colIdx });
-        const moves = getValidMoves(board, rowIdx, colIdx);
+        const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget);
         setValidMoves(moves);
       }
     }
@@ -71,7 +71,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       {displayBoard.map((row, rowIdx) =>
         row.map((cell, colIdx) => {
           const actualRow = isPlayerBlack ? board.length - 1 - rowIdx : rowIdx;
-          const actualCol = isPlayerBlack ? colIdx : colIdx;
+          const actualCol = isPlayerBlack ?colIdx : colIdx;
 
           const isDark = (actualRow + actualCol) % 2 === 1;
           const isSelected = selected?.row === actualRow && selected?.col === actualCol;
@@ -100,17 +100,22 @@ function findMove(moves, row, col) {
   return moves.find(move => move.row === row && move.col === col);
 }
 
-function updateEnPassantTarget(move, currentPiece, selected, currentColor) {
-  if (currentPiece[1] === 'p' && move.doubleStep) {
-    const dir = currentColor === 'w' ? -1 : 1;
-    return { row: selected.row + dir, col: selected.col };
+function updateEnPassantTarget(move, currentPiece, selected, color) {
+  // Only set en passant target if it's a 2-step pawn move
+  if (
+    currentPiece[1] === 'p' && // pawn
+    Math.abs(move.row - selected.row) === 2
+  ) {
+    const enPassantRow = (move.row + selected.row) / 2;
+    return { row: enPassantRow, col: selected.col }; // Square passed over
   }
   return null;
 }
 
-function handleEnPassant(board, move, currentColor) {
-  if (!move.enPassant) return;
-
-  const dir = currentColor === 'w' ? 1 : -1;
-  board[move.row + dir][move.col] = null;
+function handleEnPassant(board, move, color) {
+  if (move.enPassant) {
+    console.log('Performing En Passant capture at', move.row, move.col);
+    const captureRow = color === 'w' ? move.row + 1 : move.row - 1;
+    board[captureRow][move.col] = null;
+  }
 }

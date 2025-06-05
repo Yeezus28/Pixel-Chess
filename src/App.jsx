@@ -11,7 +11,7 @@ function App() {
       <TopNavBar isSideBar={!!playerSide} />
       <div className="centered-container">
         {!playerSide ? (
-          <><div class="button-container">
+          <><div className="button-container">
             <button className="menu-button" onClick={() => setPlayerSide('white')}>
               Play as White
             </button>
