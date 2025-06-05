@@ -16,14 +16,23 @@ export default function ChessBoard({ isPlayerBlack = false }) {
     const currentPiece = selected ? board[selected.row][selected.col] : null;
     const currentColor = turn === 'white' ? 'w' : 'b';
 
-    if (selected) {
-      if (selected.row === rowIdx && selected.col === colIdx) {
-        setSelected(null);
-        setValidMoves([]);
-        return;
-      }
+    // Clicked on currently selected piece: deselect
+    if (selected && selected.row === rowIdx && selected.col === colIdx) {
+      setSelected(null);
+      setValidMoves([]);
+      return;
+    }
 
-      const validMoves = getValidMoves(board, selected.row, selected.col);
+    // Clicked on own piece: select it (regardless of previous selection)
+    if (cell && cell[0] === currentColor) {
+      setSelected({ row: rowIdx, col: colIdx });
+      const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget);
+      setValidMoves(moves);
+      return;
+    }
+
+    // Trying to move selected piece to a new location
+    if (selected) {
       const move = findMove(validMoves, rowIdx, colIdx);
 
       if (!move) {
@@ -32,17 +41,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         return;
       }
 
-      const targetPiece = board[rowIdx][colIdx];
-
-      if (targetPiece && targetPiece[0] === currentColor) {
-        setSelected({ row: rowIdx, col: colIdx });
-        const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget);
-        setValidMoves(moves);
-        return;
-      }
-
       const newBoard = board.map(row => [...row]);
-
       handleEnPassant(newBoard, move, currentColor);
 
       newBoard[rowIdx][colIdx] = currentPiece;
@@ -55,12 +54,6 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       setSelected(null);
       setValidMoves([]);
       setTurn(turn === 'white' ? 'black' : 'white');
-    } else {
-      if (cell && cell[0] === currentColor) {
-        setSelected({ row: rowIdx, col: colIdx });
-        const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget);
-        setValidMoves(moves);
-      }
     }
   }
 
@@ -71,7 +64,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       {displayBoard.map((row, rowIdx) =>
         row.map((cell, colIdx) => {
           const actualRow = isPlayerBlack ? board.length - 1 - rowIdx : rowIdx;
-          const actualCol = isPlayerBlack ?colIdx : colIdx;
+          const actualCol = isPlayerBlack ? colIdx : colIdx;
 
           const isDark = (actualRow + actualCol) % 2 === 1;
           const isSelected = selected?.row === actualRow && selected?.col === actualCol;
@@ -103,7 +96,7 @@ function findMove(moves, row, col) {
 function updateEnPassantTarget(move, currentPiece, selected, color) {
   // Only set en passant target if it's a 2-step pawn move
   if (
-    currentPiece[1] === 'p' && // pawn
+    currentPiece[1] === 'P' && // pawn
     Math.abs(move.row - selected.row) === 2
   ) {
     const enPassantRow = (move.row + selected.row) / 2;

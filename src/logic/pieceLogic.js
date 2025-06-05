@@ -24,6 +24,10 @@ export function getValidMoves(board, row, col, enPassantTarget = null) {
 }
 
 function getPawnMoves(board, row, col, color, enPassantTarget) {
+    // Debugging output
+    console.log("getPawnMoves called for", row, col, color);
+    console.log("enPassantTarget:", enPassantTarget);
+
     const direction = color === 'w' ? -1 : 1;
     const startRow = color === 'w' ? 6 : 1;
     const moves = [];
