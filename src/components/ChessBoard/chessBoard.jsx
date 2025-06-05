@@ -1,15 +1,12 @@
 import { useState } from 'react';
-import { initialBoard } from '../../logic/initialBoard.js';
 import './chessBoard.css';
 import ChessPiece from '../ChessPiece/chessPiece.jsx';
 import { getValidMoves } from '../../logic/pieceLogic.js';
+import { initialGameState } from '../../logic/gameState.js';
 
 export default function ChessBoard({ isPlayerBlack = false }) {
-  const [board, setBoard] = useState(initialBoard);
-  const [selected, setSelected] = useState(null);
-  const [validMoves, setValidMoves] = useState([]);
-  const [enPassantTarget, setEnPassantTarget] = useState(null);
-  const [turn, setTurn] = useState('white');
+  const [gameState, setGameState] = useState(initialGameState);
+  const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved } = gameState;
 
   function handleClick(rowIdx, colIdx) {
     const cell = board[rowIdx][colIdx];
@@ -18,16 +15,22 @@ export default function ChessBoard({ isPlayerBlack = false }) {
 
     // Clicked on currently selected piece: deselect
     if (selected && selected.row === rowIdx && selected.col === colIdx) {
-      setSelected(null);
-      setValidMoves([]);
+      setGameState(prev => ({
+        ...prev,
+        selected: null,
+        validMoves: [],
+      }));
       return;
     }
 
     // Clicked on own piece: select it (regardless of previous selection)
     if (cell && cell[0] === currentColor) {
-      setSelected({ row: rowIdx, col: colIdx });
       const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget);
-      setValidMoves(moves);
+      setGameState(prev => ({
+        ...prev,
+        selected: { row: rowIdx, col: colIdx },
+        validMoves: moves,
+      }));
       return;
     }
 
@@ -36,8 +39,11 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       const move = findMove(validMoves, rowIdx, colIdx);
 
       if (!move) {
-        setSelected(null);
-        setValidMoves([]);
+        setGameState(prev => ({
+          ...prev,
+          selected: null,
+          validMoves: [],
+        }));
         return;
       }
 
@@ -47,13 +53,29 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       newBoard[rowIdx][colIdx] = currentPiece;
       newBoard[selected.row][selected.col] = null;
 
-      const enPassant = updateEnPassantTarget(move, currentPiece, selected, currentColor);
-      setEnPassantTarget(enPassant);
+      const enPassant = updateEnPassantTarget(move, currentPiece, selected);
 
-      setBoard(newBoard);
-      setSelected(null);
-      setValidMoves([]);
-      setTurn(turn === 'white' ? 'black' : 'white');
+      const kingOrRookMoved = checkForKingAndRookMoveFromOriginal(currentPiece, currentColor, selected);
+
+      setGameState(prev => ({
+        ...prev,
+        board: newBoard,
+        selected: null,
+        validMoves: [],
+        turn: prev.turn === 'white' ? 'black' : 'white',
+        enPassantTarget: enPassant,
+        hasKingsMoved: {
+          ...prev.hasKingsMoved,
+          ...kingOrRookMoved?.kings || {},
+        },
+        hasRooksMoved: {
+          ...prev.hasRooksMoved,
+          ...kingOrRookMoved?.rooks || {},
+        },
+      }));
+
+    console.log(gameState);
+    
     }
   }
 
@@ -79,7 +101,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
                 {validMoves.some(move => move.row === actualRow && move.col === actualCol) && (
                   <div className="valid-move-dot"></div>
                 )}
-                {cell && <ChessPiece type={cell} isSelected={isSelected}/>}
+                {cell && <ChessPiece type={cell} isSelected={isSelected} />}
               </div>
             </div>
           );
@@ -93,7 +115,7 @@ function findMove(moves, row, col) {
   return moves.find(move => move.row === row && move.col === col);
 }
 
-function updateEnPassantTarget(move, currentPiece, selected, color) {
+function updateEnPassantTarget(move, currentPiece, selected) {
   // Only set en passant target if it's a 2-step pawn move
   if (
     currentPiece[1] === 'P' && // pawn
@@ -107,8 +129,42 @@ function updateEnPassantTarget(move, currentPiece, selected, color) {
 
 function handleEnPassant(board, move, color) {
   if (move.enPassant) {
-    console.log('Performing En Passant capture at', move.row, move.col);
     const captureRow = color === 'w' ? move.row + 1 : move.row - 1;
     board[captureRow][move.col] = null;
   }
 }
+
+function checkForKingAndRookMoveFromOriginal(currentPiece, color, selected) {
+  if (!currentPiece || !selected) return null;
+
+  const kings = {};
+  const rooks = {};
+
+  if (isOriginalKingMove(currentPiece, color, selected)) {
+    console.log('King moved from original position');
+    kings[color] = true;
+  } else if (isOriginalRookMove(currentPiece, color, selected)) {
+    console.log('Rook moved from original position');
+    const rookSide = selected.col === 0 ? 'left' : 'right';
+    rooks[color] = { left: false, right: false, ...{} };
+    rooks[color][rookSide] = true;
+  }
+
+  return { kings, rooks };
+
+  // Helpers
+  function isOriginalKingMove(piece, color, selected) {
+    const isKing = piece[1] === 'K';
+    const kingRow = color === 'w' ? 7 : 0;
+    return isKing && selected.row === kingRow && selected.col === 4;
+  }
+
+  function isOriginalRookMove(piece, color, selected) {
+    const isRook = piece[1] === 'R';
+    const rookRow = color === 'w' ? 7 : 0;
+    const col = selected.col;
+    const isStartingRookCol = col === 0 || col === 7;
+    return isRook && selected.row === rookRow && isStartingRookCol;
+  }
+}
+

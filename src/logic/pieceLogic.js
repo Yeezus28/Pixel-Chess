@@ -58,7 +58,6 @@ function getPawnMoves(board, row, col, color, enPassantTarget) {
         const enRow = row + direction;
         const enCol = enPassantTarget.col;
         if (enPassantTarget.row === enRow && Math.abs(enCol - col) === 1) {
-            console.log('En Passant is possible at', enRow, enCol);
             moves.push({ row: enRow, col: enCol, enPassant: true });
         }
     }
