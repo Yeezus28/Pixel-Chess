@@ -1,4 +1,4 @@
-export function getValidMoves(board, row, col, enPassantTarget = null) {
+export function getValidMoves(board, row, col, enPassantTarget = null, hasKingsMoved = {}, hasRooksMoved = {}) {
     const piece = board[row][col];
     if (!piece) return [];
 
@@ -17,11 +17,12 @@ export function getValidMoves(board, row, col, enPassantTarget = null) {
         case 'Q':
             return getQueenMoves(board, row, col, color);
         case 'K':
-            return getKingMoves(board, row, col, color);
+            return getKingMoves(board, row, col, color, hasKingsMoved, hasRooksMoved);
         default:
             return [];
     }
 }
+
 
 function getPawnMoves(board, row, col, color, enPassantTarget) {
     // Debugging output
@@ -155,7 +156,8 @@ function getQueenMoves(board, row, col, color) {
     return [...getRookMoves(board, row, col, color), ...getBishopMoves(board, row, col, color)];
 }
 
-function getKingMoves(board, row, col, color) {
+function getKingMoves(board, row, col, color, hasKingsMoved, hasRooksMoved) {
+
     const moves = [];
     const kingMoves = [
         { dr: -1, dc: -1 }, { dr: -1, dc: 0 }, { dr: -1, dc: 1 },
@@ -172,6 +174,32 @@ function getKingMoves(board, row, col, color) {
             if (target === null || target[0] !== color) {
                 moves.push({ row: r, col: c });
             }
+        }
+    }
+
+    // Castling logic
+    const castlingRow = color === 'w' ? 7 : 0;
+
+    if (!hasKingsMoved[color]) {
+        // King-side castling (short)
+        if (
+            board[castlingRow][5] === null &&
+            board[castlingRow][6] === null &&
+            board[castlingRow][7] === color + 'R' &&
+            !hasRooksMoved[color]?.right
+        ) {
+            moves.push({ row: castlingRow, col: 6, castle: 'kingSide' });
+        }
+
+        // Queen-side castling (long)
+        if (
+            board[castlingRow][1] === null &&
+            board[castlingRow][2] === null &&
+            board[castlingRow][3] === null &&
+            board[castlingRow][0] === color + 'R' &&
+            !hasRooksMoved[color]?.left
+        ) {
+            moves.push({ row: castlingRow, col: 2, castle: 'queenSide' });
         }
     }
 

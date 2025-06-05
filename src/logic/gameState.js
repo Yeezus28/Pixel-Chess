@@ -5,9 +5,9 @@ export const initialGameState = {
   turn: 'white',
   validMoves: [],
   enPassantTarget: null,
-  hasKingsMoved: { white: false, black: false },
+  hasKingsMoved: { w: false, b: false },
   hasRooksMoved: {
-    white: { left: false, right: false },
-    black: { left: false, right: false },
+    w: { left: false, right: false },
+    b: { left: false, right: false },
   },
 };

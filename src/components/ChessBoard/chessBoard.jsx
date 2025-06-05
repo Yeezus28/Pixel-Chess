@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './chessBoard.css';
 import ChessPiece from '../ChessPiece/chessPiece.jsx';
 import { getValidMoves } from '../../logic/pieceLogic.js';
@@ -7,6 +7,16 @@ import { initialGameState } from '../../logic/gameState.js';
 export default function ChessBoard({ isPlayerBlack = false }) {
   const [gameState, setGameState] = useState(initialGameState);
   const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved } = gameState;
+
+  // 🔍 Log whenever gameState changes
+  useEffect(() => {
+    if (gameState.selected) {
+      //console.log('Selected piece:', gameState.selected);
+    } else {
+      console.log('Board updated.', gameState);
+    }
+  }, [gameState]);
+
 
   function handleClick(rowIdx, colIdx) {
     const cell = board[rowIdx][colIdx];
@@ -25,7 +35,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
 
     // Clicked on own piece: select it (regardless of previous selection)
     if (cell && cell[0] === currentColor) {
-      const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget);
+      const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget, hasKingsMoved, hasRooksMoved);
       setGameState(prev => ({
         ...prev,
         selected: { row: rowIdx, col: colIdx },
@@ -48,14 +58,15 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       }
 
       const newBoard = board.map(row => [...row]);
-      handleEnPassant(newBoard, move, currentColor);
 
       newBoard[rowIdx][colIdx] = currentPiece;
       newBoard[selected.row][selected.col] = null;
 
       const enPassant = updateEnPassantTarget(move, currentPiece, selected);
+      const kingOrRookMoved = checkForKingAndRookMoveFromOriginal(currentPiece, currentColor, selected, gameState);
 
-      const kingOrRookMoved = checkForKingAndRookMoveFromOriginal(currentPiece, currentColor, selected);
+      handleEnPassant(newBoard, move, currentColor);
+      handleCastling(newBoard, move, currentPiece, selected, gameState);
 
       setGameState(prev => ({
         ...prev,
@@ -70,12 +81,12 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         },
         hasRooksMoved: {
           ...prev.hasRooksMoved,
-          ...kingOrRookMoved?.rooks || {},
+          [currentColor]: {
+            ...prev.hasRooksMoved[currentColor],
+            ...kingOrRookMoved?.rooks?.[currentColor],
+          },
         },
       }));
-
-    console.log(gameState);
-    
     }
   }
 
@@ -134,20 +145,23 @@ function handleEnPassant(board, move, color) {
   }
 }
 
-function checkForKingAndRookMoveFromOriginal(currentPiece, color, selected) {
-  if (!currentPiece || !selected) return null;
+function checkForKingAndRookMoveFromOriginal(currentPiece, color, selected, prevState = { kings: {}, rooks: {} }) {
+  if (!currentPiece || !selected) return prevState;
 
-  const kings = {};
-  const rooks = {};
+  const kings = { ...prevState.kings };
+  const rooks = { ...prevState.rooks };
 
   if (isOriginalKingMove(currentPiece, color, selected)) {
-    console.log('King moved from original position');
+    //console.log('King moved from original position');
     kings[color] = true;
   } else if (isOriginalRookMove(currentPiece, color, selected)) {
-    console.log('Rook moved from original position');
+    //console.log('Rook moved from original position');
     const rookSide = selected.col === 0 ? 'left' : 'right';
-    rooks[color] = { left: false, right: false, ...{} };
-    rooks[color][rookSide] = true;
+
+    rooks[color] = {
+      ...rooks[color], // preserve any previously set values
+      [rookSide]: true,
+    };
   }
 
   return { kings, rooks };
@@ -167,4 +181,50 @@ function checkForKingAndRookMoveFromOriginal(currentPiece, color, selected) {
     return isRook && selected.row === rookRow && isStartingRookCol;
   }
 }
+
+function handleCastling(board, move, currentPiece, selected, gameState) {
+  if (!move.castle) return false;
+
+  const row = selected.row;
+  const color = currentPiece[0]; // 'w' or 'b'
+  const hasKingsMoved = gameState.hasKingsMoved[color];
+  const rookStatus = gameState.hasRooksMoved[color];
+
+  // Prevent castling if the king or the involved rook has moved
+  if (hasKingsMoved) return false;
+
+  if (move.castle === 'kingSide') {
+    if (rookStatus.right) return false;
+
+    // Perform castling
+    board[row][6] = currentPiece;
+    board[row][4] = null;
+    board[row][5] = board[row][7];
+    board[row][7] = null;
+
+    // Update movement state
+    gameState.hasKingsMoved[color] = true;
+    gameState.hasRooksMoved[color].right = true;
+
+    return true;
+  } else if (move.castle === 'queenSide') {
+    if (rookStatus.left) return false;
+
+    // Perform castling
+    board[row][2] = currentPiece;
+    board[row][4] = null;
+    board[row][3] = board[row][0];
+    board[row][0] = null;
+
+    // Update movement state
+    gameState.hasKingsMoved[color] = true;
+    gameState.hasRooksMoved[color].left = true;
+
+    return true;
+  }
+
+  return false;
+}
+
+
 
