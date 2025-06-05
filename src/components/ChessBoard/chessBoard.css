@@ -48,3 +48,6 @@
 .piece-sprite:active {
   cursor: grabbing;
 }
+.piece-sprite.selected {
+  animation: floatPiece 1.5s ease-in-out infinite;
+}

@@ -79,7 +79,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
                 {validMoves.some(move => move.row === actualRow && move.col === actualCol) && (
                   <div className="valid-move-dot"></div>
                 )}
-                {cell && <ChessPiece type={cell} />}
+                {cell && <ChessPiece type={cell} isSelected={isSelected}/>}
               </div>
             </div>
           );

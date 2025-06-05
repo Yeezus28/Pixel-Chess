@@ -1,7 +1,7 @@
 import './chessPiece.css';
 import { pieceSpriteMap } from '../../logic/pieceMap';
 
-export default function ChessPiece({ type }) {
+export default function ChessPiece({ type, isSelected = false }) {
   const sprite = pieceSpriteMap[type];
   if (!sprite) return null;
 
@@ -16,5 +16,5 @@ export default function ChessPiece({ type }) {
     '--sprite-url': `url(${backgroundUrl})`,
   };
 
-  return <div className="piece-sprite" style={style}></div>;
+  return <div className={`piece-sprite ${isSelected ? 'selected' : ''}`} style={style}></div>;
 }
