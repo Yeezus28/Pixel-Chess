@@ -4,13 +4,11 @@ import './chessBoard.css';
 import ChessPiece from '../ChessPiece/chessPiece.jsx';
 import { getValidMoves } from '../../logic/pieceLogic.js';
 
-export default function ChessBoard() {
+export default function ChessBoard({ isPlayerBlack = false }) {
   const [board, setBoard] = useState(initialBoard);
   const [selected, setSelected] = useState(null);
   const [validMoves, setValidMoves] = useState([]);
   const [enPassantTarget, setEnPassantTarget] = useState(null);
-
-  // Track whose turn it is
   const [turn, setTurn] = useState('white');
 
   function handleClick(rowIdx, colIdx) {
@@ -38,26 +36,20 @@ export default function ChessBoard() {
 
       if (targetPiece && targetPiece[0] === currentColor) {
         setSelected({ row: rowIdx, col: colIdx });
-        const moves = getValidMoves(board, rowIdx, colIdx);
+        const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget);
         setValidMoves(moves);
         return;
       }
 
       const newBoard = board.map(row => [...row]);
 
-      // 🔁 Handle en passant
       handleEnPassant(newBoard, move, currentColor);
 
-      // 🔁 Move the piece
       newBoard[rowIdx][colIdx] = currentPiece;
       newBoard[selected.row][selected.col] = null;
 
-      // 🔁 Handle en passant target
       const enPassant = updateEnPassantTarget(move, currentPiece, selected, currentColor);
       setEnPassantTarget(enPassant);
-
-      // Future: handlePromotion(newBoard, move, currentPiece)
-      // Future: handleCastling(newBoard, move, currentPiece)
 
       setBoard(newBoard);
       setSelected(null);
@@ -72,21 +64,26 @@ export default function ChessBoard() {
     }
   }
 
+  const displayBoard = isPlayerBlack ? [...board].reverse() : board;
+
   return (
-    <div className="chessboard">
-      {board.map((row, rowIdx) =>
+    <div className={`chessboard ${isPlayerBlack ? 'flipped' : ''}`}>
+      {displayBoard.map((row, rowIdx) =>
         row.map((cell, colIdx) => {
-          const isDark = (rowIdx + colIdx) % 2 === 1;
-          const isSelected = selected?.row === rowIdx && selected?.col === colIdx;
+          const actualRow = isPlayerBlack ? board.length - 1 - rowIdx : rowIdx;
+          const actualCol = isPlayerBlack ? colIdx : colIdx;
+
+          const isDark = (actualRow + actualCol) % 2 === 1;
+          const isSelected = selected?.row === actualRow && selected?.col === actualCol;
 
           return (
             <div
-              key={`${rowIdx}-${colIdx}`}
+              key={`${actualRow}-${actualCol}`}
               className={`square ${isDark ? 'dark' : 'light'} ${isSelected ? 'selected' : ''}`}
-              onClick={() => handleClick(rowIdx, colIdx)}
+              onClick={() => handleClick(actualRow, actualCol)}
             >
               <div className="square-content">
-                {validMoves.some(move => move.row === rowIdx && move.col === colIdx) && (
+                {validMoves.some(move => move.row === actualRow && move.col === actualCol) && (
                   <div className="valid-move-dot"></div>
                 )}
                 {cell && <ChessPiece type={cell} />}
@@ -105,7 +102,6 @@ function findMove(moves, row, col) {
 
 function updateEnPassantTarget(move, currentPiece, selected, currentColor) {
   if (currentPiece[1] === 'p' && move.doubleStep) {
-    console.log('En passant DETECTED');
     const dir = currentColor === 'w' ? -1 : 1;
     return { row: selected.row + dir, col: selected.col };
   }
