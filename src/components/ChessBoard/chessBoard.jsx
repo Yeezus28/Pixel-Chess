@@ -75,7 +75,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
 
 
       handleEnPassant(newBoard, move, currentColor);
-      handleCastling(newBoard, move, currentPiece, selected, gameState);
+      const didCastle = handleCastling(newBoard, move, currentPiece, selected, gameState);
 
 
       setGameState(prev => ({
@@ -87,13 +87,16 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         enPassantTarget: enPassant,
         hasKingsMoved: {
           ...prev.hasKingsMoved,
-          ...kingOrRookMoved?.kings || {},
+          ...(kingOrRookMoved?.kings ?? {}),
+          ...(didCastle ? { [currentColor]: true } : {}),
         },
         hasRooksMoved: {
           ...prev.hasRooksMoved,
           [currentColor]: {
             ...prev.hasRooksMoved[currentColor],
-            ...kingOrRookMoved?.rooks?.[currentColor],
+            ...(kingOrRookMoved?.rooks?.[currentColor] ?? {}),
+            ...(didCastle === 'kingSide' ? { right: true } : {}),
+            ...(didCastle === 'queenSide' ? { left: true } : {}),
           },
         },
       }));
@@ -208,27 +211,29 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
   if (move.castle === 'kingSide') {
     if (rookStatus.right) return false;
 
-    // Perform castling
+    // Move king and rook
     board[row][6] = currentPiece;
     board[row][4] = null;
     board[row][5] = board[row][7];
     board[row][7] = null;
 
-    // Update movement state
+    // Update castling status
     gameState.hasKingsMoved[color] = true;
     gameState.hasRooksMoved[color].right = true;
 
     return true;
-  } else if (move.castle === 'queenSide') {
+  }
+
+  if (move.castle === 'queenSide') {
     if (rookStatus.left) return false;
 
-    // Perform castling
+    // Move king and rook
     board[row][2] = currentPiece;
     board[row][4] = null;
     board[row][3] = board[row][0];
     board[row][0] = null;
 
-    // Update movement state
+    // Update castling status
     gameState.hasKingsMoved[color] = true;
     gameState.hasRooksMoved[color].left = true;
 
