@@ -8,6 +8,8 @@ export default function ChessBoard({ isPlayerBlack = false }) {
   const [gameState, setGameState] = useState(initialGameState);
   const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved } = gameState;
 
+
+
   // 🔍 Log whenever gameState changes
   useEffect(() => {
     if (gameState.selected) {
@@ -16,6 +18,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       console.log('Board updated.', gameState);
     }
   }, [gameState]);
+
 
 
   function handleClick(rowIdx, colIdx) {
@@ -33,6 +36,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       return;
     }
 
+
     // Clicked on own piece: select it (regardless of previous selection)
     if (cell && cell[0] === currentColor) {
       const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget, hasKingsMoved, hasRooksMoved);
@@ -43,6 +47,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       }));
       return;
     }
+
 
     // Trying to move selected piece to a new location
     if (selected) {
@@ -57,16 +62,21 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         return;
       }
 
+
       const newBoard = board.map(row => [...row]);
+
 
       newBoard[rowIdx][colIdx] = currentPiece;
       newBoard[selected.row][selected.col] = null;
 
+
       const enPassant = updateEnPassantTarget(move, currentPiece, selected);
       const kingOrRookMoved = checkForKingAndRookMoveFromOriginal(currentPiece, currentColor, selected, gameState);
 
+
       handleEnPassant(newBoard, move, currentColor);
       handleCastling(newBoard, move, currentPiece, selected, gameState);
+
 
       setGameState(prev => ({
         ...prev,
@@ -90,7 +100,9 @@ export default function ChessBoard({ isPlayerBlack = false }) {
     }
   }
 
+
   const displayBoard = isPlayerBlack ? [...board].reverse() : board;
+
 
   return (
     <div className={`chessboard ${isPlayerBlack ? 'flipped' : ''}`}>
