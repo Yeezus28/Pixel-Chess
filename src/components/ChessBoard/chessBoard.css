@@ -69,15 +69,13 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
-  border: 2px solid black;
-  padding: 10px;
+  background: transparent;
+  border: none;
   display: flex;
   gap: 10px;
 }
 
 .promotion-piece {
   cursor: pointer;
-  width: 10dvw;
-  height: 10dvh;
+  width: 20dvh;
 }

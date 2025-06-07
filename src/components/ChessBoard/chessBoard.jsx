@@ -60,8 +60,9 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       newBoard[rowIdx][colIdx] = currentPiece;
       newBoard[selected.row][selected.col] = null;
 
+      // Special handling: en passant, castling, etc.
       const enPassant = updateEnPassantTarget(move, currentPiece, selected);
-      const promotion = updatePromotionTarget(move, currentPiece, selected);
+      const promotion = updatePromotionTarget(move, currentPiece);
       const kingOrRookMoved = checkForKingAndRookMoveFromOriginal(currentPiece, currentColor, selected, gameState);
 
       handleEnPassant(newBoard, move, currentColor);
@@ -127,7 +128,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
             <div
               key={pieceType}
               className="promotion-piece"
-              onClick={() => handlePromotionSelection(pieceType)}
+              onClick={() => handlePromotionSelection(pieceType, gameState, setGameState)}
             >
               <ChessPiece type={`${promotion.color}${pieceType}`} />
             </div>
@@ -234,22 +235,21 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
   return false;
 }
 
-function updatePromotionTarget(move, currentPiece, selected) {
+function updatePromotionTarget(move, currentPiece) {
   const promotionRow = currentPiece[0] === 'w' ? 0 : 7;
   if (currentPiece[1] === 'P' && move.row === promotionRow) {
-    return { row: promotionRow, col: selected.col };
+    return { row: promotionRow, col: move.col, color: currentPiece[0] };
   }
   return null;
 }
 
-function handlePromotionSelection(currentPiece) {
-  const newBoard = board.map(row => [...row]);
-  newBoard[promotion.row][promotion.col] = `${promotion.color}${pieceType}`;
+function handlePromotionSelection(pieceType, gameState, setGameState) {
+  const newBoard = gameState.board.map(row => [...row]);
+  newBoard[gameState.promotion.row][gameState.promotion.col] = `${gameState.promotion.color}${pieceType}`;
 
   setGameState(prev => ({
     ...prev,
     board: newBoard,
-    turn: prev.turn === 'white' ? 'black' : 'white',
     promotion: null,
   }));
 }
