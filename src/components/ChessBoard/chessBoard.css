@@ -51,3 +51,33 @@
 .piece-sprite.selected {
   animation: floatPiece 1.5s ease-in-out infinite;
 }
+
+.promotion-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 2px solid black;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.promotion-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 2px solid black;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.promotion-piece {
+  cursor: pointer;
+  width: 10dvw;
+  height: 10dvh;
+}

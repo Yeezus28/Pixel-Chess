@@ -6,11 +6,8 @@ import { initialGameState } from '../../logic/gameState.js';
 
 export default function ChessBoard({ isPlayerBlack = false }) {
   const [gameState, setGameState] = useState(initialGameState);
-  const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved } = gameState;
+  const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved, promotion } = gameState;
 
-
-
-  // 🔍 Log whenever gameState changes
   useEffect(() => {
     if (gameState.selected) {
       //console.log('Selected piece:', gameState.selected);
@@ -19,9 +16,9 @@ export default function ChessBoard({ isPlayerBlack = false }) {
     }
   }, [gameState]);
 
-
-
   function handleClick(rowIdx, colIdx) {
+    if (promotion) return; // Prevent interaction during promotion
+
     const cell = board[rowIdx][colIdx];
     const currentPiece = selected ? board[selected.row][selected.col] : null;
     const currentColor = turn === 'white' ? 'w' : 'b';
@@ -36,7 +33,6 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       return;
     }
 
-
     // Clicked on own piece: select it (regardless of previous selection)
     if (cell && cell[0] === currentColor) {
       const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget, hasKingsMoved, hasRooksMoved);
@@ -48,8 +44,6 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       return;
     }
 
-
-    // Trying to move selected piece to a new location
     if (selected) {
       const move = findMove(validMoves, rowIdx, colIdx);
 
@@ -62,21 +56,16 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         return;
       }
 
-
       const newBoard = board.map(row => [...row]);
-
-
       newBoard[rowIdx][colIdx] = currentPiece;
       newBoard[selected.row][selected.col] = null;
 
-
       const enPassant = updateEnPassantTarget(move, currentPiece, selected);
+      const promotion = updatePromotionTarget(move, currentPiece, selected);
       const kingOrRookMoved = checkForKingAndRookMoveFromOriginal(currentPiece, currentColor, selected, gameState);
-
 
       handleEnPassant(newBoard, move, currentColor);
       const didCastle = handleCastling(newBoard, move, currentPiece, selected, gameState);
-
 
       setGameState(prev => ({
         ...prev,
@@ -85,6 +74,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         validMoves: [],
         turn: prev.turn === 'white' ? 'black' : 'white',
         enPassantTarget: enPassant,
+        promotion: promotion,
         hasKingsMoved: {
           ...prev.hasKingsMoved,
           ...(kingOrRookMoved?.kings ?? {}),
@@ -103,9 +93,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
     }
   }
 
-
   const displayBoard = isPlayerBlack ? [...board].reverse() : board;
-
 
   return (
     <div className={`chessboard ${isPlayerBlack ? 'flipped' : ''}`}>
@@ -133,6 +121,19 @@ export default function ChessBoard({ isPlayerBlack = false }) {
           );
         })
       )}
+      {promotion && (
+        <div className="promotion-menu">
+          {['Q', 'R', 'B', 'N'].map(pieceType => (
+            <div
+              key={pieceType}
+              className="promotion-piece"
+              onClick={() => handlePromotionSelection(pieceType)}
+            >
+              <ChessPiece type={`${promotion.color}${pieceType}`} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -142,13 +143,9 @@ function findMove(moves, row, col) {
 }
 
 function updateEnPassantTarget(move, currentPiece, selected) {
-  // Only set en passant target if it's a 2-step pawn move
-  if (
-    currentPiece[1] === 'P' && // pawn
-    Math.abs(move.row - selected.row) === 2
-  ) {
-    const enPassantRow = (move.row + selected.row) / 2;
-    return { row: enPassantRow, col: selected.col }; // Square passed over
+  if (currentPiece[1] === 'P' && Math.abs(move.row - selected.row) === 2) {
+    const nextRow = (move.row + selected.row) / 2;
+    return { row: nextRow, col: selected.col };
   }
   return null;
 }
@@ -167,21 +164,18 @@ function checkForKingAndRookMoveFromOriginal(currentPiece, color, selected, prev
   const rooks = { ...prevState.rooks };
 
   if (isOriginalKingMove(currentPiece, color, selected)) {
-    //console.log('King moved from original position');
     kings[color] = true;
   } else if (isOriginalRookMove(currentPiece, color, selected)) {
-    //console.log('Rook moved from original position');
     const rookSide = selected.col === 0 ? 'left' : 'right';
 
     rooks[color] = {
-      ...rooks[color], // preserve any previously set values
+      ...rooks[color],
       [rookSide]: true,
     };
   }
 
   return { kings, rooks };
 
-  // Helpers
   function isOriginalKingMove(piece, color, selected) {
     const isKing = piece[1] === 'K';
     const kingRow = color === 'w' ? 7 : 0;
@@ -201,7 +195,7 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
   if (!move.castle) return false;
 
   const row = selected.row;
-  const color = currentPiece[0]; // 'w' or 'b'
+  const color = currentPiece[0];
   const hasKingsMoved = gameState.hasKingsMoved[color];
   const rookStatus = gameState.hasRooksMoved[color];
 
@@ -211,13 +205,11 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
   if (move.castle === 'kingSide') {
     if (rookStatus.right) return false;
 
-    // Move king and rook
     board[row][6] = currentPiece;
     board[row][4] = null;
     board[row][5] = board[row][7];
     board[row][7] = null;
 
-    // Update castling status
     gameState.hasKingsMoved[color] = true;
     gameState.hasRooksMoved[color].right = true;
 
@@ -227,7 +219,6 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
   if (move.castle === 'queenSide') {
     if (rookStatus.left) return false;
 
-    // Move king and rook
     board[row][2] = currentPiece;
     board[row][4] = null;
     board[row][3] = board[row][0];
@@ -243,5 +234,23 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
   return false;
 }
 
+function updatePromotionTarget(move, currentPiece, selected) {
+  const promotionRow = currentPiece[0] === 'w' ? 0 : 7;
+  if (currentPiece[1] === 'P' && move.row === promotionRow) {
+    return { row: promotionRow, col: selected.col };
+  }
+  return null;
+}
 
+function handlePromotionSelection(currentPiece) {
+  const newBoard = board.map(row => [...row]);
+  newBoard[promotion.row][promotion.col] = `${promotion.color}${pieceType}`;
+
+  setGameState(prev => ({
+    ...prev,
+    board: newBoard,
+    turn: prev.turn === 'white' ? 'black' : 'white',
+    promotion: null,
+  }));
+}
 
