@@ -1,19 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import './chessBoard.css';
 import ChessPiece from '../ChessPiece/chessPiece.jsx';
 import { getValidMoves } from '../../logic/pieceLogic.js';
+import { PositionHistory } from '../../logic/positionHistory.js';
 import { initialGameState } from '../../logic/gameState.js';
 
 export default function ChessBoard({ isPlayerBlack = false }) {
   const [gameState, setGameState] = useState(initialGameState);
   const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved, promotion, check, checkmate } = gameState;
+  const positionHistory = useRef(new PositionHistory());
+  const prevBoardRef = useRef(gameState.board);
+  const prevTurnRef = useRef(gameState.turn);
 
   useEffect(() => {
-    if (gameState.selected) {
-      //console.log('Selected piece:', gameState.selected);
-    } else {
-      console.log('Board updated.', gameState);
+    const boardChanged = !boardsAreEqual(prevBoardRef.current, gameState.board);
+    const turnChanged = prevTurnRef.current !== gameState.turn;
+
+    if (boardChanged && turnChanged) {
+      //console.log(gameState);
+      const count = positionHistory.current.addPosition(gameState);
+      console.log(`Position history count: ${count}`);
+      if (count >= 3) {
+        console.log('Draw by threefold repetition!');
+        setGameState(prev => ({
+          ...prev,
+          drawByRepetition: true,
+        }));
+      }
     }
+
+    prevBoardRef.current = gameState.board;
+    prevTurnRef.current = gameState.turn;
   }, [gameState]);
 
   function handleClick(rowIdx, colIdx) {
@@ -146,6 +163,15 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       )}
     </div>
   );
+}
+function boardsAreEqual(board1, board2) {
+  if (board1.length !== board2.length) return false;
+  for (let i = 0; i < board1.length; i++) {
+    for (let j = 0; j < board1[i].length; j++) {
+      if (board1[i][j] !== board2[i][j]) return false;
+    }
+  }
+  return true;
 }
 
 function findMove(moves, row, col) {

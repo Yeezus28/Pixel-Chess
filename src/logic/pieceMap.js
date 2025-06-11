@@ -1,3 +1,5 @@
+// pieceMap.js
+
 export const pieceSpriteMap = {
   bK: { row: 1, col: 1, color: 'black' },
   bQ: { row: 1, col: 0, color: 'black' },

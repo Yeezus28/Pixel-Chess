@@ -1,3 +1,5 @@
+// gameState.js
+
 import { initialBoard } from './initialBoard.js';
 
 export const initialGameState = {
@@ -14,4 +16,5 @@ export const initialGameState = {
   check: false,
   checkmate: false,
   stalemate: false,
+  drawByRepetition: false,
 };

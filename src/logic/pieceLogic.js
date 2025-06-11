@@ -1,3 +1,5 @@
+// pieceLogic.js
+
 export function getValidMoves(board, row, col, enPassantTarget = null, hasKingsMoved = {}, hasRooksMoved = {}) {
     const piece = board[row][col];
     if (!piece) return [];
