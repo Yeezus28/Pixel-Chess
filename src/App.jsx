@@ -12,10 +12,10 @@ function App() {
       <div className="centered-container">
         {!playerSide ? (
           <><div className="button-container">
-            <button className="menu-button" onClick={() => setPlayerSide('white')}>
+            <button className="menu-button white" onClick={() => setPlayerSide('white')}>
               Play as White
             </button>
-            <button className="menu-button" onClick={() => setPlayerSide('black')}>
+            <button className="menu-button black" onClick={() => setPlayerSide('black')}>
               Play as Black
             </button>
           </div>

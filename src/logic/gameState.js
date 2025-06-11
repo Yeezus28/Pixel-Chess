@@ -11,4 +11,6 @@ export const initialGameState = {
     w: { left: false, right: false },
     b: { left: false, right: false },
   },
+  check: false,
+  checkmate: false,
 };

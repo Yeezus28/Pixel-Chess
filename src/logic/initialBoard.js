@@ -11,14 +11,12 @@ export const initialBoard = [
   */
   // Initial chess board setup
 
-
-  ['bR', 'bN', null, null, 'bK', 'bB', 'bN', 'bR'],
-  ['bP', 'bP', 'wP', 'wP', 'bP', 'bP', 'bP', 'bP'],
+  ['bR', null, null, null, 'bK', null, null, 'bR'],
+  ['bP', 'bP', 'bP', 'bP', null, 'bP', 'bP', 'bP'],
   [null, null, null, null, null, null, null, null],
-  [null, null, null, null, null, null, null, null],
+  [null, null, null, 'wQ', null, null, null, null],
   [null, null, null, null, null, null, null, null],
   [null, null, null, null, null, null, null, null],
   ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
-  ['wR', null, null, null, 'wK', null,null, 'wR'],
-  
+  ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
 ];

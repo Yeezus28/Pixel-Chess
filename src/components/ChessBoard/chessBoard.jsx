@@ -6,7 +6,7 @@ import { initialGameState } from '../../logic/gameState.js';
 
 export default function ChessBoard({ isPlayerBlack = false }) {
   const [gameState, setGameState] = useState(initialGameState);
-  const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved, promotion } = gameState;
+  const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved, promotion, check, checkmate } = gameState;
 
   useEffect(() => {
     if (gameState.selected) {
@@ -17,11 +17,12 @@ export default function ChessBoard({ isPlayerBlack = false }) {
   }, [gameState]);
 
   function handleClick(rowIdx, colIdx) {
-    if (promotion) return; // Prevent interaction during promotion
+    if (promotion) return;
 
     const cell = board[rowIdx][colIdx];
     const currentPiece = selected ? board[selected.row][selected.col] : null;
     const currentColor = turn === 'white' ? 'w' : 'b';
+    const opponentColor = currentColor === 'w' ? 'b' : 'w';
 
     // Clicked on currently selected piece: deselect
     if (selected && selected.row === rowIdx && selected.col === colIdx) {
@@ -36,10 +37,14 @@ export default function ChessBoard({ isPlayerBlack = false }) {
     // Clicked on own piece: select it (regardless of previous selection)
     if (cell && cell[0] === currentColor) {
       const moves = getValidMoves(board, rowIdx, colIdx, enPassantTarget, hasKingsMoved, hasRooksMoved);
+      const legalMoves = moves.filter(move => {
+        const simulatedBoard = simulateMove(board, { row: rowIdx, col: colIdx }, move);
+        return !isKingInCheck(simulatedBoard, currentColor);
+      });
       setGameState(prev => ({
         ...prev,
         selected: { row: rowIdx, col: colIdx },
-        validMoves: moves,
+        validMoves: legalMoves,
       }));
       return;
     }
@@ -68,6 +73,8 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       handleEnPassant(newBoard, move, currentColor);
       const didCastle = handleCastling(newBoard, move, currentPiece, selected, gameState);
 
+      const isCheckOrCheckmate = checkOrCheckmate(newBoard, opponentColor);
+      
       setGameState(prev => ({
         ...prev,
         board: newBoard,
@@ -90,6 +97,8 @@ export default function ChessBoard({ isPlayerBlack = false }) {
             ...(didCastle === 'queenSide' ? { left: true } : {}),
           },
         },
+        check: isCheckOrCheckmate.check,
+        checkmate: isCheckOrCheckmate.checkmate,
       }));
     }
   }
@@ -141,6 +150,77 @@ export default function ChessBoard({ isPlayerBlack = false }) {
 
 function findMove(moves, row, col) {
   return moves.find(move => move.row === row && move.col === col);
+}
+
+function checkOrCheckmate(board, color) {
+  const inCheck = isKingInCheck(board, color);
+  const hasLegalMoves = hasAnyLegalMoves(board, color);
+
+  const status = {
+    check: inCheck,
+    checkmate: inCheck && !hasLegalMoves
+  };
+
+  return status;
+}
+
+function isKingInCheck(board, color) {
+  let kingPos = null;
+
+  // Find king position
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (piece === `${color}K`) {
+        kingPos = { row, col };
+        break;
+      }
+    }
+  }
+
+  if (!kingPos) return false;  // king missing (shouldn't happen)
+
+  // Now check if any opponent piece can attack kingPos
+  const opponentColor = color === 'w' ? 'b' : 'w';
+
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (piece && piece[0] === opponentColor) {
+        const moves = getValidMoves(board, row, col, null, {}, {}); // adjust if you need enPassant, castling info
+        if (moves.some(move => move.row === kingPos.row && move.col === kingPos.col)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+function hasAnyLegalMoves(board, color) {
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (!piece || piece[0] !== color) continue;
+
+      const moves = getValidMoves(board, row, col, null, {}, {});
+      for (const move of moves) {
+        const simulatedBoard = simulateMove(board, { row, col }, move);
+        if (!isKingInCheck(simulatedBoard, color)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function simulateMove(board, from, to) {
+  const newBoard = board.map(row => [...row]);  // shallow clone rows
+  newBoard[to.row][to.col] = newBoard[from.row][from.col];
+  newBoard[from.row][from.col] = null;
+  return newBoard;
 }
 
 function updateEnPassantTarget(move, currentPiece, selected) {

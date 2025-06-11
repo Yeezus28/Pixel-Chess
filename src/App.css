@@ -18,3 +18,13 @@
   flex-direction: row;
   gap: 1rem;
 }
+
+.menu-button.white {
+  background-color: white;
+  color: black;
+}
+
+.menu-button.black {
+  background-color: black;
+  color: white;
+}
