@@ -13,4 +13,5 @@ export const initialGameState = {
   },
   check: false,
   checkmate: false,
+  stalemate: false,
 };

@@ -74,7 +74,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
       const didCastle = handleCastling(newBoard, move, currentPiece, selected, gameState);
 
       const isCheckOrCheckmate = checkOrCheckmate(newBoard, opponentColor);
-      
+
       setGameState(prev => ({
         ...prev,
         board: newBoard,
@@ -86,19 +86,19 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         hasKingsMoved: {
           ...prev.hasKingsMoved,
           ...(kingOrRookMoved?.kings ?? {}),
-          ...(didCastle ? { [currentColor]: true } : {}),
+          ...(didCastle?.kingMoved ? { [currentColor]: true } : {}),
         },
         hasRooksMoved: {
           ...prev.hasRooksMoved,
           [currentColor]: {
             ...prev.hasRooksMoved[currentColor],
             ...(kingOrRookMoved?.rooks?.[currentColor] ?? {}),
-            ...(didCastle === 'kingSide' ? { right: true } : {}),
-            ...(didCastle === 'queenSide' ? { left: true } : {}),
+            ...(didCastle?.rookMoved ?? {}),
           },
         },
         check: isCheckOrCheckmate.check,
         checkmate: isCheckOrCheckmate.checkmate,
+        stalemate: isCheckOrCheckmate.stalemate,
       }));
     }
   }
@@ -156,9 +156,12 @@ function checkOrCheckmate(board, color) {
   const inCheck = isKingInCheck(board, color);
   const hasLegalMoves = hasAnyLegalMoves(board, color);
 
+  const stalemate = !inCheck && !hasLegalMoves;
+
   const status = {
     check: inCheck,
-    checkmate: inCheck && !hasLegalMoves
+    checkmate: inCheck && !hasLegalMoves,
+    stalemate: stalemate
   };
 
   return status;
@@ -291,10 +294,7 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
     board[row][5] = board[row][7];
     board[row][7] = null;
 
-    gameState.hasKingsMoved[color] = true;
-    gameState.hasRooksMoved[color].right = true;
-
-    return true;
+    return { kingMoved: true, rookMoved: { right: true } };
   }
 
   if (move.castle === 'queenSide') {
@@ -305,11 +305,7 @@ function handleCastling(board, move, currentPiece, selected, gameState) {
     board[row][3] = board[row][0];
     board[row][0] = null;
 
-    // Update castling status
-    gameState.hasKingsMoved[color] = true;
-    gameState.hasRooksMoved[color].left = true;
-
-    return true;
+    return { kingMoved: true, rookMoved: { left: true } };
   }
 
   return false;
