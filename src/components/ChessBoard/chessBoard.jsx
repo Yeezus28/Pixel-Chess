@@ -1,44 +1,52 @@
 import './chessBoard.css';
 import { useState } from 'react';
-import { GameEngine } from '../../logic/gamEngine.js';
+import { ChessEngine } from '../../logic/chessEngine.js';
 import Piece from '../ChessPiece/chessPiece.jsx';
 import PromotionModal from '../PromotionModal/promotionModal.jsx';
 
-const ChessBoard = () => {
-  const [gameState, setGameState] = useState(GameEngine.initializeGame());
+const ChessBoard = (isPlayerBlack) => {
+  const [gameState, setGameState] = useState(ChessEngine.initializeGame());
 
   const handleCellClick = (row, col) => {
-    const newState = GameEngine.handleClick(gameState, row, col);
+    const newState = ChessEngine.handleClick(gameState, row, col);
     setGameState(newState);
   };
 
   const handlePromotion = (pieceType) => {
-    const newState = GameEngine.handlePromotionSelection(gameState, pieceType);
+    const newState = ChessEngine.handlePromotionSelection(gameState, pieceType);
     setGameState(newState);
   };
+
+  const boardToRender = isPlayerBlack 
+    ? [...gameState.board].reverse() 
+    : gameState.board;
 
   return (
     <div>
       <div className="chessboard">
-        {gameState.board.flatMap((boardRow, row) =>
-          boardRow.map((cell, col) => {
-            const isSelected = gameState.selected?.row === row && gameState.selected?.col === col;
-            const isValidMove = gameState.validMoves.some(m => m.row === row && m.col === col);
-            return (
-              <div
-                key={`${row}-${col}`}
-                className={`square ${(row + col) % 2 === 0 ? 'light' : 'dark'} ${isSelected ? 'selected' : ''}`}
-                onClick={() => handleCellClick(row, col)}
-              >
-                <div className="square-content">
-                  {isValidMove && <div className="valid-move-dot" />}
-                  {cell && <Piece type={cell} />}
-                </div>
+      {boardToRender.flatMap((boardRow, rowIndex) =>
+        boardRow.map((cell, colIndex) => {
+          const actualRow = isPlayerBlack ? 7 - rowIndex : rowIndex;
+          const actualCol = isPlayerBlack ? colIndex : colIndex;
+
+          const isSelected = gameState.selected?.row === actualRow && gameState.selected?.col === actualCol;
+          const isValidMove = gameState.validMoves.some(m => m.row === actualRow && m.col === actualCol);
+
+          return (
+            <div
+              key={`${actualRow}-${actualCol}`}
+              className={`square ${(actualRow + actualCol) % 2 === 0 ? 'light' : 'dark'} ${isSelected ? 'selected' : ''}`}
+              onClick={() => handleCellClick(actualRow, actualCol)}
+            >
+              <div className="square-content">
+                {isValidMove && <div className="valid-move-dot" />}
+                {cell && <Piece type={cell} />}
               </div>
-            );
-          })
-        )}
-      </div>
+            </div>
+          );
+        })
+      )}
+    </div>
       {(gameState.promotion || gameState.gameOver) && (
         <div className="chess-overlay">
           {

@@ -1,9 +1,9 @@
-// /logic/GameEngine.js
+// /logic/ChessEngine.js
 import { getValidMoves } from './pieceLogic';
 import { PositionHistory } from './positionHistory';
 import { initialGameState } from './gameState';
 
-export class GameEngine {
+export class ChessEngine {
   static initializeGame() {
     return {
       ...initialGameState,
@@ -34,8 +34,8 @@ export class GameEngine {
     if (cell && cell[0] === currentColor) {
       const moves = getValidMoves(board, row, col, enPassantTarget, hasKingsMoved, hasRooksMoved);
       const legalMoves = moves.filter(move => {
-        const simulated = GameEngine.simulateMove(board, { row, col }, move);
-        return !GameEngine.isKingInCheck(simulated, currentColor);
+        const simulated = ChessEngine.simulateMove(board, { row, col }, move);
+        return !ChessEngine.isKingInCheck(simulated, currentColor);
       });
       return { ...gameState, selected: { row, col }, validMoves: legalMoves };
     }
@@ -48,15 +48,15 @@ export class GameEngine {
       newBoard[row][col] = currentPiece;
       newBoard[selected.row][selected.col] = null;
 
-      const enPassant = GameEngine.updateEnPassant(move, currentPiece, selected);
-      const promotionTarget = GameEngine.updatePromotion(move, currentPiece);
-      const movedFlags = GameEngine.updateMovedFlags(currentPiece, currentColor, selected, hasKingsMoved, hasRooksMoved);
+      const enPassant = ChessEngine.updateEnPassant(move, currentPiece, selected);
+      const promotionTarget = ChessEngine.updatePromotion(move, currentPiece);
+      const movedFlags = ChessEngine.updateMovedFlags(currentPiece, currentColor, selected, hasKingsMoved, hasRooksMoved);
 
-      GameEngine.handleEnPassant(newBoard, move, currentColor);
-      const didCastle = GameEngine.handleCastling(newBoard, move, currentPiece, selected, hasRooksMoved);
+      ChessEngine.handleEnPassant(newBoard, move, currentColor);
+      const didCastle = ChessEngine.handleCastling(newBoard, move, currentPiece, selected, hasRooksMoved);
 
-      const status = GameEngine.evaluateBoard(newBoard, opponentColor);
-      const result = GameEngine.getResultMessage(status, currentColor);
+      const status = ChessEngine.evaluateBoard(newBoard, opponentColor);
+      const result = ChessEngine.getResultMessage(status, currentColor);
 
       const newGameState = {
         board: newBoard,
@@ -130,8 +130,8 @@ export class GameEngine {
         if (!piece || piece[0] !== color) continue;
         const moves = getValidMoves(board, row, col, null, {}, {});
         for (const move of moves) {
-          const simulated = GameEngine.simulateMove(board, { row, col }, move);
-          if (!GameEngine.isKingInCheck(simulated, color)) return true;
+          const simulated = ChessEngine.simulateMove(board, { row, col }, move);
+          if (!ChessEngine.isKingInCheck(simulated, color)) return true;
         }
       }
     }
@@ -139,8 +139,8 @@ export class GameEngine {
   }
 
   static evaluateBoard(board, color) {
-    const check = GameEngine.isKingInCheck(board, color);
-    const legal = GameEngine.hasAnyLegalMoves(board, color);
+    const check = ChessEngine.isKingInCheck(board, color);
+    const legal = ChessEngine.hasAnyLegalMoves(board, color);
     return {
       check, checkmate: check && !legal, stalemate: !check && !legal
     };
@@ -211,8 +211,8 @@ export class GameEngine {
     newBoard[promotion.row][promotion.col] = `${promotion.color}${pieceType}`;
 
     const opponentColor = promotion.color === 'w' ? 'b' : 'w';
-    const status = GameEngine.evaluateBoard(newBoard, opponentColor);
-    const result = GameEngine.getResultMessage(status, promotion.color);
+    const status = ChessEngine.evaluateBoard(newBoard, opponentColor);
+    const result = ChessEngine.getResultMessage(status, promotion.color);
 
     return {
       ...gameState,
