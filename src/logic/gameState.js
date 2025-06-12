@@ -17,4 +17,13 @@ export const initialGameState = {
   checkmate: false,
   stalemate: false,
   drawByRepetition: false,
+  timer: {
+    white: 0,
+    black: 0,
+    increment: 0,
+    startTime: null,
+    elapsedTime: 0,
+  },
+  gameOver: false,
+  gameResult: { winner: null, reason: null },
 };

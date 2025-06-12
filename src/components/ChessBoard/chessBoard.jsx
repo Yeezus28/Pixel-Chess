@@ -7,7 +7,7 @@ import { initialGameState } from '../../logic/gameState.js';
 
 export default function ChessBoard({ isPlayerBlack = false }) {
   const [gameState, setGameState] = useState(initialGameState);
-  const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved, promotion, check, checkmate } = gameState;
+  const { board, turn, selected, validMoves, enPassantTarget, hasKingsMoved, hasRooksMoved, promotion, check, checkmate, stalemate, drawByRepetition, gameOver, gameResult } = gameState;
   const positionHistory = useRef(new PositionHistory());
   const prevBoardRef = useRef(gameState.board);
   const prevTurnRef = useRef(gameState.turn);
@@ -17,14 +17,19 @@ export default function ChessBoard({ isPlayerBlack = false }) {
     const turnChanged = prevTurnRef.current !== gameState.turn;
 
     if (boardChanged && turnChanged) {
-      //console.log(gameState);
+      console.log(gameState);
       const count = positionHistory.current.addPosition(gameState);
-      console.log(`Position history count: ${count}`);
+      //console.log(`Position history count: ${count}`);
       if (count >= 3) {
-        console.log('Draw by threefold repetition!');
+        //console.log('Draw by threefold repetition!');
         setGameState(prev => ({
           ...prev,
           drawByRepetition: true,
+          gameOver: true,
+          gameResult: {
+            winner: null,
+            reason: 'Draw by threefold repetition',
+          },
         }));
       }
     }
@@ -34,7 +39,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
   }, [gameState]);
 
   function handleClick(rowIdx, colIdx) {
-    if (promotion) return;
+    if (gameOver || promotion) return;
 
     const cell = board[rowIdx][colIdx];
     const currentPiece = selected ? board[selected.row][selected.col] : null;
@@ -92,6 +97,8 @@ export default function ChessBoard({ isPlayerBlack = false }) {
 
       const isCheckOrCheckmate = checkOrCheckmate(newBoard, opponentColor);
 
+      const winnerMessage = getWinnerMessage(isCheckOrCheckmate, currentColor);
+
       setGameState(prev => ({
         ...prev,
         board: newBoard,
@@ -116,6 +123,11 @@ export default function ChessBoard({ isPlayerBlack = false }) {
         check: isCheckOrCheckmate.check,
         checkmate: isCheckOrCheckmate.checkmate,
         stalemate: isCheckOrCheckmate.stalemate,
+        gameOver: isCheckOrCheckmate.checkmate || isCheckOrCheckmate.stalemate,
+        gameResult: {
+          winner: winnerMessage.color,
+          reason: winnerMessage.reason,
+        },
       }));
     }
   }
@@ -356,3 +368,18 @@ function handlePromotionSelection(pieceType, gameState, setGameState) {
   }));
 }
 
+function getWinnerMessage(isCheckOrCheckmate, currentColor) {
+  if (isCheckOrCheckmate.checkmate) {
+    return {
+      color: currentColor === 'w' ? 'white' : 'black',
+      reason: 'Checkmate',
+    };
+  }
+  if (isCheckOrCheckmate.stalemate) {
+    return {
+      color: null,
+      reason: 'Stalemate',
+    };
+  }
+  return { color: null, reason: '' };
+}
