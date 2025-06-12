@@ -19,34 +19,38 @@ const ChessBoard = () => {
 
   return (
     <div>
-      <div className="chess-board">
-        {gameState.board.map((boardRow, row) => (
-          <div className="board-row" key={row}>
-            {boardRow.map((cell, col) => {
-              const isSelected = gameState.selected?.row === row && gameState.selected?.col === col;
-              const isValidMove = gameState.validMoves.some(m => m.row === row && m.col === col);
-              return (
-                <div
-                  key={col}
-                  className={`cell ${(row + col) % 2 === 0 ? 'light' : 'dark'} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => handleCellClick(row, col)}
-                >
+      <div className="chessboard">
+        {gameState.board.flatMap((boardRow, row) =>
+          boardRow.map((cell, col) => {
+            const isSelected = gameState.selected?.row === row && gameState.selected?.col === col;
+            const isValidMove = gameState.validMoves.some(m => m.row === row && m.col === col);
+            return (
+              <div
+                key={`${row}-${col}`}
+                className={`square ${(row + col) % 2 === 0 ? 'light' : 'dark'} ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleCellClick(row, col)}
+              >
+                <div className="square-content">
+                  {isValidMove && <div className="valid-move-dot" />}
                   {cell && <Piece type={cell} />}
-                  {isValidMove && <div className="valid-move-marker" />}
                 </div>
-              );
-            })}
-          </div>
-        ))}
+              </div>
+            );
+          })
+        )}
       </div>
-
-      {gameState.promotion && (
-        <PromotionModal color={gameState.promotion.color} onSelect={handlePromotion} />
-      )}
-
-      {gameState.gameOver && (
-        <div className="game-result">
-          {gameState.gameResult.reason} {gameState.gameResult.winner && `- ${gameState.gameResult.winner} wins`}
+      {(gameState.promotion || gameState.gameOver) && (
+        <div className="chess-overlay">
+          {
+            gameState.promotion && (
+              <PromotionModal color={gameState.promotion.color} onSelect={handlePromotion} />
+            )
+          }
+          {gameState.gameOver && (
+            <div className="game-result">
+              {gameState.gameResult.reason} {gameState.gameResult.winner && `- ${gameState.gameResult.winner} wins`}
+            </div>
+          )}
         </div>
       )}
     </div>
