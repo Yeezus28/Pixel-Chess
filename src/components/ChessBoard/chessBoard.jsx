@@ -4,12 +4,13 @@ import { ChessEngine } from '../../logic/chessEngine.js';
 import Piece from '../ChessPiece/chessPiece.jsx';
 import PromotionModal from '../PromotionModal/promotionModal.jsx';
 
-const ChessBoard = (isPlayerBlack) => {
+const ChessBoard = ({ isPlayerBlack }) => {
   const [gameState, setGameState] = useState(ChessEngine.initializeGame());
 
   const handleCellClick = (row, col) => {
     const newState = ChessEngine.handleClick(gameState, row, col);
     setGameState(newState);
+    console.log('Game State:', newState);
   };
 
   const handlePromotion = (pieceType) => {
