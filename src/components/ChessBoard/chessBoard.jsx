@@ -11,15 +11,19 @@ export default function ChessBoard({ isPlayerBlack = false }) {
   const positionHistory = useRef(new PositionHistory());
   const prevBoardRef = useRef(gameState.board);
   const prevTurnRef = useRef(gameState.turn);
+  const prevGameOverRef = useRef(gameState.gameOver);
+
 
   useEffect(() => {
     const boardChanged = !boardsAreEqual(prevBoardRef.current, gameState.board);
     const turnChanged = prevTurnRef.current !== gameState.turn;
+    const { gameOver } = gameState;
 
-    if (boardChanged && turnChanged) {
+    if ((boardChanged && turnChanged) || gameOver) {
       console.log(gameState);
       const count = positionHistory.current.addPosition(gameState);
       //console.log(`Position history count: ${count}`);
+      console.log(positionHistory)
       if (count >= 3) {
         //console.log('Draw by threefold repetition!');
         setGameState(prev => ({
@@ -36,6 +40,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
 
     prevBoardRef.current = gameState.board;
     prevTurnRef.current = gameState.turn;
+    prevGameOverRef.current = gameState.gameOver;
   }, [gameState]);
 
   function handleClick(rowIdx, colIdx) {
@@ -128,6 +133,7 @@ export default function ChessBoard({ isPlayerBlack = false }) {
           winner: winnerMessage.color,
           reason: winnerMessage.reason,
         },
+        positionHistory: positionHistory.current,
       }));
     }
   }
@@ -160,22 +166,35 @@ export default function ChessBoard({ isPlayerBlack = false }) {
           );
         })
       )}
-      {promotion && (
-        <div className="promotion-menu">
-          {['Q', 'R', 'B', 'N'].map(pieceType => (
-            <div
-              key={pieceType}
-              className="promotion-piece"
-              onClick={() => handlePromotionSelection(pieceType, gameState, setGameState)}
-            >
-              <ChessPiece type={`${promotion.color}${pieceType}`} />
+      {(gameOver || promotion) && (
+        <div className="chess-overlay">
+          {gameOver && (
+            <div className='gameOver-container'>
+              <div className='button-container'>
+                <button className='menu-button' onClick={() => setGameState(initialGameState)}>Menu</button>
+                <button className='restart-button' onClick={() => restartGame(setGameState, positionHistory, prevBoardRef, prevTurnRef, prevGameOverRef)}>
+                  Restart
+                </button>
+              </div>
             </div>
-          ))}
+          )}
+          {promotion && (<div className="promotion-menu">
+            {['Q', 'R', 'B', 'N'].map(pieceType => (
+              <div
+                key={pieceType}
+                className="promotion-piece"
+                onClick={() => handlePromotionSelection(pieceType, gameState, setGameState)}
+              >
+                <ChessPiece type={`${promotion.color}${pieceType}`} />
+              </div>
+            ))}
+          </div>)}
         </div>
       )}
     </div>
   );
 }
+
 function boardsAreEqual(board1, board2) {
   if (board1.length !== board2.length) return false;
   for (let i = 0; i < board1.length; i++) {
@@ -361,10 +380,24 @@ function handlePromotionSelection(pieceType, gameState, setGameState) {
   const newBoard = gameState.board.map(row => [...row]);
   newBoard[gameState.promotion.row][gameState.promotion.col] = `${gameState.promotion.color}${pieceType}`;
 
+  const currentColor = gameState.promotion.color;
+  const opponentColor = currentColor === 'w' ? 'b' : 'w';
+
+  const isCheckOrCheckmate = checkOrCheckmate(newBoard, opponentColor);
+  const winnerMessage = getWinnerMessage(isCheckOrCheckmate, currentColor);
+
   setGameState(prev => ({
     ...prev,
     board: newBoard,
     promotion: null,
+    check: isCheckOrCheckmate.check,
+    checkmate: isCheckOrCheckmate.checkmate,
+    stalemate: isCheckOrCheckmate.stalemate,
+    gameOver: isCheckOrCheckmate.checkmate || isCheckOrCheckmate.stalemate,
+    gameResult: {
+      winner: winnerMessage.color,
+      reason: winnerMessage.reason,
+    },
   }));
 }
 
@@ -382,4 +415,12 @@ function getWinnerMessage(isCheckOrCheckmate, currentColor) {
     };
   }
   return { color: null, reason: '' };
+}
+
+function restartGame(setGameState, positionHistory, prevBoardRef, prevTurnRef, prevGameOverRef) {
+  setGameState(initialGameState);
+  positionHistory.current = new PositionHistory();
+  prevBoardRef.current = initialGameState.board;
+  prevTurnRef.current = initialGameState.turn;
+  prevGameOverRef.current = initialGameState.gameOver;
 }

@@ -13,8 +13,8 @@ export const initialBoard = [
   */
   // Initial chess board setup
 
-  ['bR', null, null, null, 'bK', null, null, 'bR'],
-  ['bP', 'bP', 'bP', 'bP', null, 'bP', 'bP', 'bP'],
+  [null, null, null, null, null, null, 'bK', 'bR'],
+  ['bP', 'wQ', 'wP', 'bP', null, 'bP', 'bP', 'bP'],
   [null, null, null, null, null, null, null, null],
   [null, null, null, 'wQ', null, null, null, null],
   [null, null, null, null, null, null, null, null],
